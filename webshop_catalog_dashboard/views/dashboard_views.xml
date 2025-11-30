@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_dashboard_form" model="ir.ui.view">
+            <field name="name">catalog.dashboard.form</field>
+            <field name="model">catalog.dashboard</field>
+            <field name="arch" type="xml">
+                <form string="Webshop Dashboard">
+                    <sheet>
+                        <h1>Webshop Catalog Dashboard</h1>
+                        <div class="row mt16 o_dashboard">
+                            <!-- Klaar voor publicatie -->
+                            <div class="col-lg-4 col-md-6 mb16">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="text-success">
+                                            <i class="fa fa-check-circle"/> 
+                                            <field name="ready_count"/>
+                                        </h3>
+                                        <p class="text-muted">Klaar voor publicatie</p>
+                                        <button type="object" name="action_view_ready_products" 
+                                                class="btn btn-primary btn-sm" string="Bekijk"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mist hoofdafbeelding -->
+                            <div class="col-lg-4 col-md-6 mb16">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="text-warning">
+                                            <i class="fa fa-picture-o"/> 
+                                            <field name="missing_image_count"/>
+                                        </h3>
+                                        <p class="text-muted">Mist hoofdafbeelding</p>
+                                        <button type="object" name="action_view_missing_image" 
+                                                class="btn btn-warning btn-sm" string="Bekijk"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mist verkoopprijs -->
+                            <div class="col-lg-4 col-md-6 mb16">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="text-danger">
+                                            <i class="fa fa-euro"/> 
+                                            <field name="missing_price_count"/>
+                                        </h3>
+                                        <p class="text-muted">Mist verkoopprijs</p>
+                                        <button type="object" name="action_view_missing_price" 
+                                                class="btn btn-danger btn-sm" string="Bekijk"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mist omschrijving -->
+                            <div class="col-lg-4 col-md-6 mb16">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="text-warning">
+                                            <i class="fa fa-file-text-o"/> 
+                                            <field name="missing_description_count"/>
+                                        </h3>
+                                        <p class="text-muted">Mist omschrijving</p>
+                                        <button type="object" name="action_view_missing_description" 
+                                                class="btn btn-warning btn-sm" string="Bekijk"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mist EAN -->
+                            <div class="col-lg-4 col-md-6 mb16">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="text-warning">
+                                            <i class="fa fa-barcode"/> 
+                                            <field name="missing_ean_count"/>
+                                        </h3>
+                                        <p class="text-muted">Mist EAN/barcode</p>
+                                        <button type="object" name="action_view_missing_ean" 
+                                                class="btn btn-warning btn-sm" string="Bekijk"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Prijsdaling >15% -->
+                            <div class="col-lg-4 col-md-6 mb16">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="text-info">
+                                            <i class="fa fa-line-chart"/> 
+                                            <field name="price_drop_count"/>
+                                        </h3>
+                                        <p class="text-muted">Prijsdaling &gt;15%</p>
+                                        <button type="object" name="action_view_price_drop" 
+                                                class="btn btn-info btn-sm" string="Bekijk"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_catalog_dashboard" model="ir.actions.act_window">
+            <field name="name">Webshop Dashboard</field>
+            <field name="res_model">catalog.dashboard</field>
+            <field name="view_mode">form</field>
+            <field name="target">current</field>
+        </record>
+
+        <menuitem id="menu_webshop_dashboard"
+                  name="Webshop Auto-Publish"
+                  web_icon="webshop_catalog_dashboard,static/description/icon.png"
+                  action="action_catalog_dashboard"
+                  sequence="25"/>
+    </data>
+</odoo>
