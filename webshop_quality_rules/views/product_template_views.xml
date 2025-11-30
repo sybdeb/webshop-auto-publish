@@ -23,13 +23,13 @@
             </field>
         </record>
 
-        <!-- Add validation status to product tree/list view -->
+        <!-- Add validation status to product tree view -->
         <record id="view_product_template_webshop_tree" model="ir.ui.view">
             <field name="name">product.template.tree.webshop</field>
             <field name="model">product.template</field>
-            <field name="inherit_id" ref="product.product_template_only_form_view"/>
+            <field name="inherit_id" ref="product.product_template_tree_view"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='list_price']" position="after">
+                <xpath expr="//tree" position="inside">
                     <field name="is_ready_for_publication" widget="boolean" optional="hide"/>
                 </xpath>
             </field>
