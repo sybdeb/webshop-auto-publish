@@ -4,7 +4,7 @@
         <record id="view_product_category_webshop_form" model="ir.ui.view">
             <field name="name">product.category.form.webshop</field>
             <field name="model">product.category</field>
-            <field name="inherit_id" ref="product.product_category_view_form"/>
+            <field name="inherit_id" ref="product.product_category_form_view"/>
             <field name="arch" type="xml">
                 <notebook position="inside">
                     <page string="Webshop Regels" name="webshop_rules">
