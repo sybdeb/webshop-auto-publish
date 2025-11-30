@@ -25,5 +25,12 @@
                 </xpath>
             </field>
         </record>
+
+        <!-- Menu item onder Instellingen -->
+        <menuitem id="menu_product_category_config"
+                  name="Productcategorieën Regels"
+                  parent="webshop_catalog_dashboard.menu_webshop_settings"
+                  action="product.product_category_action_form"
+                  sequence="10"/>
     </data>
 </odoo>

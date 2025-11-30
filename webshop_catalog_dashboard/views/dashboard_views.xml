@@ -125,10 +125,23 @@
             <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
         </record>
 
-        <menuitem id="menu_webshop_dashboard"
-                  name="Webshop Auto-Publish"
+        <!-- Main menu -->
+        <menuitem id="menu_webshop_root"
+                  name="Producten"
                   web_icon="webshop_catalog_dashboard,static/description/icon.png"
-                  action="action_catalog_dashboard"
                   sequence="25"/>
+        
+        <!-- Dashboard submenu -->
+        <menuitem id="menu_webshop_dashboard"
+                  name="Dashboard"
+                  parent="menu_webshop_root"
+                  action="action_catalog_dashboard"
+                  sequence="10"/>
+        
+        <!-- Instellingen submenu -->
+        <menuitem id="menu_webshop_settings"
+                  name="Instellingen"
+                  parent="menu_webshop_root"
+                  sequence="100"/>
     </data>
 </odoo>
