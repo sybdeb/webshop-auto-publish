@@ -6,27 +6,23 @@
             <field name="model">product.category</field>
             <field name="inherit_id" ref="product.product_category_form_view"/>
             <field name="arch" type="xml">
-                <notebook position="inside">
-                    <page string="Webshop Regels" name="webshop_rules">
-                        <group>
-                            <group string="Publicatie-instellingen">
-                                <field name="auto_publish"/>
-                                <field name="price_drop_threshold"/>
-                            </group>
-                            <group string="Voorraad-instellingen">
-                                <field name="min_supplier_stock"/>
-                            </group>
+                <xpath expr="//form/sheet" position="inside">
+                    <group string="Webshop Auto-Publish Regels">
+                        <group string="Publicatie-instellingen">
+                            <field name="auto_publish"/>
+                            <field name="price_drop_threshold"/>
                         </group>
-                        <group>
-                            <group string="Verplichte velden">
-                                <field name="require_ean"/>
-                                <field name="require_brand"/>
-                                <field name="require_short_description"/>
-                                <field name="require_long_description"/>
-                            </group>
+                        <group string="Voorraad-instellingen">
+                            <field name="min_supplier_stock"/>
                         </group>
-                    </page>
-                </notebook>
+                        <group string="Verplichte velden">
+                            <field name="require_ean"/>
+                            <field name="require_brand"/>
+                            <field name="require_short_description"/>
+                            <field name="require_long_description"/>
+                        </group>
+                    </group>
+                </xpath>
             </field>
         </record>
     </data>
