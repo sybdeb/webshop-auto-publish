@@ -22,5 +22,65 @@
                 </notebook>
             </field>
         </record>
+
+        <!-- Product actions -->
+        <record id="action_products_to_validate" model="ir.actions.act_window">
+            <field name="name">Producten te Valideren</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('need_validation', '=', True)]</field>
+            <field name="context">{'search_default_filter_to_sell': 1}</field>
+        </record>
+
+        <record id="action_products_ready" model="ir.actions.act_window">
+            <field name="name">Klaar voor Publicatie</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('is_ready_for_publication', '=', True), ('website_published', '=', False)]</field>
+        </record>
+
+        <!-- Menu items onder Producten -->
+        <menuitem id="menu_products_overview"
+                  name="Overzicht"
+                  parent="webshop_catalog_dashboard.menu_webshop_root"
+                  sequence="20"/>
+
+        <menuitem id="menu_all_products"
+                  name="Alle Producten"
+                  parent="menu_products_overview"
+                  action="product.product_template_action"
+                  sequence="10"/>
+
+        <menuitem id="menu_products_to_validate"
+                  name="Te Valideren"
+                  parent="menu_products_overview"
+                  action="action_products_to_validate"
+                  sequence="20"/>
+
+        <menuitem id="menu_products_ready"
+                  name="Klaar voor Publicatie"
+                  parent="menu_products_overview"
+                  action="action_products_ready"
+                  sequence="30"/>
+
+        <!-- Validatie instellingen submenu -->
+        <menuitem id="menu_validation_settings"
+                  name="Validatie Instellingen"
+                  parent="webshop_catalog_dashboard.menu_webshop_settings"
+                  sequence="20"/>
+
+        <!-- Cron job toegang -->
+        <record id="action_cron_validate" model="ir.actions.act_window">
+            <field name="name">Automatische Validatie Cron</field>
+            <field name="res_model">ir.cron</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('name', 'ilike', 'Webshop')]</field>
+        </record>
+
+        <menuitem id="menu_cron_config"
+                  name="Cron Jobs"
+                  parent="menu_validation_settings"
+                  action="action_cron_validate"
+                  sequence="10"/>
     </data>
 </odoo>
