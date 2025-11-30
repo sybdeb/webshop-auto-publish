@@ -1,10 +1,14 @@
 # Webshop Auto-Publish
-Odoo 19 module voor automatische product-validatie en publicatie op de webshop.
+Odoo 18/19 module voor automatische product-validatie en publicatie op de webshop.
+
+## 🚀 Quick Start
+**Nieuw hier?** → Lees **[QUICKSTART.md](QUICKSTART.md)** voor installatie in 15 minuten!
 
 ## Installatie
 1. Clone deze repo in je addons-map.
-2. Update apps list in Odoo.
-3. Installeer: webshop_catalog_dashboard, webshop_quality_rules, webshop_auto_publish.
+2. Restart Odoo server.
+3. Update apps list in Odoo (Settings → Apps → Update Apps List).
+4. Installeer: **Webshop Auto-Publish (Bundle)** - installeert alles automatisch.
 
 ## Features
 - Klikbaar dashboard met tegels voor issues.
@@ -46,5 +50,23 @@ Per categorie kunnen regels worden aangepast via:
 ## Cron Job
 Draait elke 15 minuten en valideert producten die gemarkeerd zijn voor controle.
 
+## 📚 Documentatie
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Installatie & eerste test in 15 min
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Uitgebreide test procedures (10 tests)
+- **[FREEMIUM_GUIDE.md](FREEMIUM_GUIDE.md)** - Hoe geld verdienen met deze module
+- **[GIT_SETUP.md](GIT_SETUP.md)** - GitHub repository setup
+
+## 🐛 Troubleshooting
+
+Problemen? Check eerst:
+1. Odoo versie 18.0 of 19.0?
+2. Developer mode ingeschakeld?
+3. Workers enabled in odoo.conf? (`workers = 2`)
+4. Alle dependencies geïnstalleerd?
+
 ## Auteur
 Sybdeb
+
+## Versie
+1.0.0 - Compatible met Odoo 18.0 en 19.0
