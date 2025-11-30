@@ -1,5 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -55,10 +58,6 @@ class ProductTemplate(models.Model):
             # Zet resultaten
             template.is_ready_for_publication = len(errors) == 0
             template.validation_errors = "\n".join(errors) if errors else "✅ Alle controles geslaagd"
-            
-            # Automatisch offline halen bij fouten (als enforce_strictly aan staat)
-            if errors and template.enforce_strictly and template.website_published:
-                template.website_published = False
 
     def _has_price_drop_over_threshold(self):
         """
@@ -76,10 +75,9 @@ class ProductTemplate(models.Model):
     def cron_validate_products(self):
         """Cron job: Valideer alleen dirty producten"""
         dirty = self.search([('need_validation', '=', True)])
-        _logger = self.env['ir.logging']._logger
         
         if dirty:
-            _logger.info(f"Validating {len(dirty)} products...")
+            _logger.info("Validating %d products...", len(dirty))
             dirty._compute_is_ready()
             dirty.write({'need_validation': False})
             
@@ -91,7 +89,7 @@ class ProductTemplate(models.Model):
             )
             if ready_to_publish:
                 ready_to_publish.write({'website_published': True})
-                _logger.info(f"Auto-published {len(ready_to_publish)} products")
+                _logger.info("Auto-published %d products", len(ready_to_publish))
             
             # Auto-depublish producten met fouten
             need_depublish = dirty.filtered(
@@ -101,7 +99,7 @@ class ProductTemplate(models.Model):
             )
             if need_depublish:
                 need_depublish.write({'website_published': False})
-                _logger.info(f"Auto-depublished {len(need_depublish)} products due to validation errors")
+                _logger.info("Auto-depublished %d products due to validation errors", len(need_depublish))
 
     @api.model_create_multi
     def create(self, vals_list):

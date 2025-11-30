@@ -7,8 +7,9 @@
 Klikbaar dashboard met tegels voor producten die wachten op publicatie.
     """,
     'author': 'Sybdeb',
-    'depends': ['website_sale', 'webshop_quality_rules'],
+    'depends': ['website_sale'],
     'data': [
+        'security/ir.model.access.csv',
         'views/dashboard_views.xml',
     ],
     'installable': True,

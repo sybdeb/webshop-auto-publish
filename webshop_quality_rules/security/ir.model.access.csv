@@ -1,3 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_catalog_dashboard_user,catalog.dashboard.user,webshop_catalog_dashboard.model_catalog_dashboard,base.group_user,1,0,0,0
-access_catalog_dashboard_manager,catalog.dashboard.manager,webshop_catalog_dashboard.model_catalog_dashboard,sales_team.group_sale_manager,1,1,1,0
+access_product_template_user,product.template.webshop.user,product.model_product_template,base.group_user,1,0,0,0
+access_product_category_user,product.category.webshop.user,product.model_product_category,base.group_user,1,0,0,0

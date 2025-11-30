@@ -109,6 +109,20 @@
             <field name="res_model">catalog.dashboard</field>
             <field name="view_mode">form</field>
             <field name="target">current</field>
+            <field name="context">{'create': False}</field>
+        </record>
+        
+        <!-- Create default dashboard record -->
+        <record id="default_dashboard" model="catalog.dashboard"/>
+        
+        <!-- Override action to always open the same dashboard -->
+        <record id="action_catalog_dashboard" model="ir.actions.act_window">
+            <field name="name">Webshop Dashboard</field>
+            <field name="res_model">catalog.dashboard</field>
+            <field name="view_mode">form</field>
+            <field name="target">current</field>
+            <field name="res_id" ref="default_dashboard"/>
+            <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
         </record>
 
         <menuitem id="menu_webshop_dashboard"
