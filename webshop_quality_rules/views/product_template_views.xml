@@ -23,15 +23,15 @@
             </field>
         </record>
 
-        <!-- List view: toon status -->
-        <record id="view_product_template_webshop_list" model="ir.ui.view">
-            <field name="name">product.template.list.webshop</field>
+        <!-- Add validation status to product tree/list view -->
+        <record id="view_product_template_webshop_tree" model="ir.ui.view">
+            <field name="name">product.template.tree.webshop</field>
             <field name="model">product.template</field>
-            <field name="inherit_id" ref="product.product_template_list_view"/>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
             <field name="arch" type="xml">
-                <field name="list_price" position="after">
-                    <field name="is_ready_for_publication" widget="boolean" optional="show"/>
-                </field>
+                <xpath expr="//field[@name='list_price']" position="after">
+                    <field name="is_ready_for_publication" widget="boolean" optional="hide"/>
+                </xpath>
             </field>
         </record>
     </data>
