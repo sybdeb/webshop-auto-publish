@@ -19,7 +19,7 @@ Na installatie vind je het dashboard onder het Webshop Auto-Publish menu.
     ],
     'data': [],
     'installable': True,
-    'application': True,
+    'application': False,
     'auto_install': False,
-    'license': 'LGPL-3',
+    'license': 'OPL-1',  # Bundle includes proprietary quality_rules
 }

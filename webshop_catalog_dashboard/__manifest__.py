@@ -15,5 +15,5 @@ Klikbaar dashboard met tegels voor producten die wachten op publicatie.
     'installable': True,
     'application': True,
     'auto_install': False,
-    'license': 'LGPL-3',
+    'license': 'LGPL-3',  # Free version - marketing tool
 }

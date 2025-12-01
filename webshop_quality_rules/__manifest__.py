@@ -18,5 +18,5 @@ Standaardregels: foto, prijs, omschrijving, EAN, merk, leverancier >=5 stuks, pr
     'installable': True,
     'application': False,
     'auto_install': False,
-    'license': 'LGPL-3',
+    'license': 'OPL-1',  # Proprietary - Paid version (€49/month)
 }
