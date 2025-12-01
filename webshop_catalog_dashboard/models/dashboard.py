@@ -3,8 +3,8 @@ from odoo import models, fields, api
 class CatalogDashboard(models.Model):
     _name = 'catalog.dashboard'
     _description = 'Webshop Catalog Dashboard'
-    _rec_name = 'id'
 
+    name = fields.Char(string='Dashboard Name', default='Product Overzicht', readonly=True)
     ready_count = fields.Integer(compute='_compute_ready_count', string='Klaar voor publicatie')
     missing_image_count = fields.Integer(compute='_compute_missing_image', string='Mist hoofdafbeelding')
     missing_price_count = fields.Integer(compute='_compute_missing_price', string='Mist verkoopprijs')
@@ -87,7 +87,7 @@ class CatalogDashboard(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Klaar voor publicatie',
             'res_model': 'product.template',
-            'view_mode': 'kanban,tree,form',
+            'view_mode': 'kanban,form',
             'domain': domain,
         }
 
@@ -99,7 +99,7 @@ class CatalogDashboard(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder hoofdafbeelding',
             'res_model': 'product.template',
-            'view_mode': 'kanban,tree,form',
+            'view_mode': 'kanban,form',
             'domain': domain,
         }
 
@@ -111,7 +111,7 @@ class CatalogDashboard(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder prijs',
             'res_model': 'product.template',
-            'view_mode': 'kanban,tree,form',
+            'view_mode': 'kanban,form',
             'domain': domain,
         }
 
@@ -123,7 +123,7 @@ class CatalogDashboard(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder omschrijving',
             'res_model': 'product.template',
-            'view_mode': 'kanban,tree,form',
+            'view_mode': 'kanban,form',
             'domain': domain,
         }
 
@@ -135,7 +135,7 @@ class CatalogDashboard(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder EAN',
             'res_model': 'product.template',
-            'view_mode': 'kanban,tree,form',
+            'view_mode': 'kanban,form',
             'domain': domain,
         }
 
@@ -144,7 +144,7 @@ class CatalogDashboard(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder merk',
             'res_model': 'product.template',
-            'view_mode': 'kanban,tree,form',
+            'view_mode': 'kanban,form',
             'domain': [],
         }
 
@@ -153,6 +153,6 @@ class CatalogDashboard(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Producten met prijsdaling >15%',
             'res_model': 'product.template',
-            'view_mode': 'kanban,tree,form',
+            'view_mode': 'kanban,form',
             'domain': [],
         }

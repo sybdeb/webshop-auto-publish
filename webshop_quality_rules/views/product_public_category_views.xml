@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Inherit website category form view -->
+        <record id="view_product_public_category_webshop_form" model="ir.ui.view">
+            <field name="name">product.public.category.form.webshop</field>
+            <field name="model">product.public.category</field>
+            <field name="inherit_id" ref="website_sale.product_public_category_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/sheet" position="inside">
+                    <group string="Webshop Auto-Publish Regels" groups="base.group_user">
+                        <group string="Publicatie-instellingen">
+                            <field name="auto_publish"/>
+                            <field name="price_drop_threshold"/>
+                        </group>
+                        <group string="Voorraad-instellingen">
+                            <field name="min_supplier_stock"/>
+                        </group>
+                        <group string="Verplichte velden">
+                            <field name="require_ean"/>
+                            <field name="require_brand"/>
+                            <field name="require_short_description"/>
+                            <field name="require_long_description"/>
+                        </group>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Action voor Website Categorieën -->
+        <record id="action_website_category_config" model="ir.actions.act_window">
+            <field name="name">Website Categorieën</field>
+            <field name="res_model">product.public.category</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Maak een nieuwe website categorie aan
+                </p>
+                <p>
+                    Configureer per categorie de validatieregels voor auto-publicatie.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu item onder Instellingen -->
+        <menuitem id="menu_website_category_config"
+                  name="Website Categorieën"
+                  parent="webshop_catalog_dashboard.menu_webshop_settings"
+                  action="action_website_category_config"
+                  sequence="10"/>
+    </data>
+</odoo>

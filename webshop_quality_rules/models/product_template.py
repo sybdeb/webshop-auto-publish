@@ -12,10 +12,18 @@ class ProductTemplate(models.Model):
     enforce_strictly = fields.Boolean(default=True, string="Streng afdwingen (automatisch offline bij fouten)")
     validation_errors = fields.Text(compute='_compute_is_ready', store=True, string="Validatiefouten")
 
-    @api.depends('image_1920', 'list_price', 'description_sale', 'description', 'barcode', 'categ_id', 'seller_ids', 'categ_id.auto_publish', 'categ_id.min_supplier_stock', 'categ_id.require_ean', 'categ_id.require_brand')
+    @api.depends('image_1920', 'list_price', 'description_sale', 'description', 'barcode', 'public_categ_ids', 'seller_ids', 'public_categ_ids.auto_publish', 'public_categ_ids.min_supplier_stock', 'public_categ_ids.require_ean', 'public_categ_ids.require_brand')
     def _compute_is_ready(self):
         for template in self:
             errors = []
+            
+            # Haal de strengste regels van alle website categorieën
+            categories = template.public_categ_ids
+            if not categories:
+                errors.append(_("❌ Geen website categorie toegewezen"))
+                template.is_ready_for_publication = False
+                template.validation_errors = "\n".join(errors)
+                continue
             
             # Regel 1: Hoofdafbeelding
             if not template.image_1920:
@@ -25,35 +33,31 @@ class ProductTemplate(models.Model):
             if template.list_price <= 0:
                 errors.append(_("❌ Verkoopprijs ≤ 0"))
             
-            # Regel 3: Korte omschrijving
-            if not template.description_sale:
+            # Regel 3: Korte omschrijving (als minstens 1 categorie het vereist)
+            if any(cat.require_short_description for cat in categories) and not template.description_sale:
                 errors.append(_("❌ Mist omschrijving (verkoop)"))
             
-            # Regel 4: Lange omschrijving
-            if not template.description:
+            # Regel 4: Lange omschrijving (als minstens 1 categorie het vereist)
+            if any(cat.require_long_description for cat in categories) and not template.description:
                 errors.append(_("❌ Mist uitgebreide omschrijving"))
             
-            # Regel 5: EAN/barcode (configureerbaar per categorie)
-            if template.categ_id.require_ean and not template.barcode:
+            # Regel 5: EAN/barcode (als minstens 1 categorie het vereist)
+            if any(cat.require_ean for cat in categories) and not template.barcode:
                 errors.append(_("❌ Mist EAN/barcode"))
             
-            # Regel 6: Merk (optioneel - alleen als brand_id field bestaat)
-            if template.categ_id.require_brand and hasattr(template, 'brand_id') and not template.brand_id:
+            # Regel 6: Merk (als minstens 1 categorie het vereist)
+            if any(cat.require_brand for cat in categories) and hasattr(template, 'brand_id') and not template.brand_id:
                 errors.append(_("❌ Mist merk"))
             
-            # Regel 7: Categorie ≠ All
-            if template.categ_id.name == 'All':
-                errors.append(_("❌ Staat nog in categorie 'All'"))
-            
-            # Regel 8: Leverancier met >=X stuks (configureerbaar per categorie)
-            min_stock = template.categ_id.min_supplier_stock or 5
+            # Regel 7: Leverancier met >=X stuks (neem hoogste minimum van alle categorieën)
+            min_stock = max([cat.min_supplier_stock or 5 for cat in categories])
             supplier_ok = any(s.product_qty >= min_stock for s in template.seller_ids) if template.seller_ids else False
             if not supplier_ok:
                 errors.append(_("❌ Geen leverancier met ≥%d stuks") % min_stock)
             
-            # Regel 9: Prijsdaling check (optioneel - implementeer als je historische prijzen hebt)
+            # Regel 8: Prijsdaling check
             if template._has_price_drop_over_threshold():
-                errors.append(_("⚠️ Prijsdaling >15% - controle nodig"))
+                errors.append(_("⚠️ Prijsdaling >15%% - controle nodig"))
 
             # Zet resultaten
             template.is_ready_for_publication = len(errors) == 0
@@ -66,7 +70,11 @@ class ProductTemplate(models.Model):
         Voor nu: return False (pas aan als je supplier sync hebt).
         """
         self.ensure_one()
-        threshold = self.categ_id.price_drop_threshold or 15.0
+        # Neem laagste threshold van alle categorieën (meest streng)
+        if self.public_categ_ids:
+            threshold = min([cat.price_drop_threshold or 15.0 for cat in self.public_categ_ids])
+        else:
+            threshold = 15.0
         # TODO: Implementeer met historische prijzen
         # Voorbeeld: vergelijk self.list_price met vorige prijs uit history
         return False
@@ -81,10 +89,11 @@ class ProductTemplate(models.Model):
             dirty._compute_is_ready()
             dirty.write({'need_validation': False})
             
-            # Auto-publish producten die klaar zijn
+            # Auto-publish producten die klaar zijn (alle categorieën moeten auto_publish aan hebben)
             ready_to_publish = dirty.filtered(
                 lambda p: p.is_ready_for_publication 
-                and p.categ_id.auto_publish 
+                and p.public_categ_ids
+                and all(cat.auto_publish for cat in p.public_categ_ids)
                 and not p.website_published
             )
             if ready_to_publish:
@@ -113,7 +122,7 @@ class ProductTemplate(models.Model):
         # Alleen markeren als relevante velden wijzigen
         relevant_fields = {
             'image_1920', 'list_price', 'description_sale', 'description',
-            'barcode', 'categ_id', 'seller_ids', 'website_published'
+            'barcode', 'public_categ_ids', 'seller_ids', 'website_published'
         }
         if any(field in vals for field in relevant_fields):
             vals['need_validation'] = True

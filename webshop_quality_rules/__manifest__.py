@@ -12,6 +12,7 @@ Standaardregels: foto, prijs, omschrijving, EAN, merk, leverancier >=5 stuks, pr
         'security/ir.model.access.csv',
         'views/product_template_views.xml',
         'views/product_category_views.xml',
+        'views/product_public_category_views.xml',
         'data/cron.xml',
     ],
     'installable': True,

@@ -27,7 +27,7 @@
         <record id="action_products_to_validate" model="ir.actions.act_window">
             <field name="name">Producten te Valideren</field>
             <field name="res_model">product.template</field>
-            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_mode">kanban,form</field>
             <field name="domain">[('need_validation', '=', True)]</field>
             <field name="context">{'search_default_filter_to_sell': 1}</field>
         </record>
@@ -35,7 +35,7 @@
         <record id="action_products_ready" model="ir.actions.act_window">
             <field name="name">Klaar voor Publicatie</field>
             <field name="res_model">product.template</field>
-            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_mode">kanban,form</field>
             <field name="domain">[('is_ready_for_publication', '=', True), ('website_published', '=', False)]</field>
         </record>
 
@@ -73,7 +73,7 @@
         <record id="action_cron_validate" model="ir.actions.act_window">
             <field name="name">Automatische Validatie Cron</field>
             <field name="res_model">ir.cron</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="domain">[('name', 'ilike', 'Webshop')]</field>
         </record>
 
