@@ -51,7 +51,7 @@ class ProductTemplate(models.Model):
             
             # Regel 7: Leverancier met >=X stuks (neem hoogste minimum van alle categorieën)
             min_stock = max([cat.min_supplier_stock or 5 for cat in categories])
-            supplier_ok = any(s.product_qty >= min_stock for s in template.seller_ids) if template.seller_ids else False
+            supplier_ok = any(s.min_qty >= min_stock for s in template.seller_ids) if template.seller_ids else False
             if not supplier_ok:
                 errors.append(_("❌ Geen leverancier met ≥%d stuks") % min_stock)
             
