@@ -22,7 +22,7 @@ class CatalogDashboard(models.Model):
                 rec.ready_count = ProductTemplate.search_count([
                     ('is_ready_for_publication', '=', True),
                     ('website_published', '=', False),
-                    ('categ_id.auto_publish', '=', True)
+                    ('public_categ_ids.auto_publish', '=', True)
                 ])
             else:
                 rec.ready_count = 0
@@ -31,37 +31,28 @@ class CatalogDashboard(models.Model):
     def _compute_missing_image(self):
         for rec in self:
             ProductTemplate = self.env['product.template']
-            domain = [('image_1920', '=', False)]
-            # Check of quality_rules geïnstalleerd is
-            if 'auto_publish' in self.env['product.category']._fields:
-                domain.append(('categ_id.auto_publish', '=', True))
+            domain = [('image_1920', '=', False), ('active', '=', True)]
             rec.missing_image_count = ProductTemplate.search_count(domain)
 
     @api.depends_context('uid')
     def _compute_missing_price(self):
         for rec in self:
             ProductTemplate = self.env['product.template']
-            domain = [('list_price', '<=', 0)]
-            if 'auto_publish' in self.env['product.category']._fields:
-                domain.append(('categ_id.auto_publish', '=', True))
+            domain = [('list_price', '<=', 0), ('active', '=', True)]
             rec.missing_price_count = ProductTemplate.search_count(domain)
 
     @api.depends_context('uid')
     def _compute_missing_description(self):
         for rec in self:
             ProductTemplate = self.env['product.template']
-            domain = ['|', ('description_sale', '=', False), ('description', '=', False)]
-            if 'auto_publish' in self.env['product.category']._fields:
-                domain.append(('categ_id.auto_publish', '=', True))
+            domain = ['|', ('description_sale', '=', False), ('description', '=', False), ('active', '=', True)]
             rec.missing_description_count = ProductTemplate.search_count(domain)
 
     @api.depends_context('uid')
     def _compute_missing_ean(self):
         for rec in self:
             ProductTemplate = self.env['product.template']
-            domain = [('barcode', '=', False)]
-            if 'auto_publish' in self.env['product.category']._fields:
-                domain.append(('categ_id.auto_publish', '=', True))
+            domain = [('barcode', '=', False), ('active', '=', True)]
             rec.missing_ean_count = ProductTemplate.search_count(domain)
 
     @api.depends_context('uid')
@@ -81,8 +72,8 @@ class CatalogDashboard(models.Model):
         if 'is_ready_for_publication' in self.env['product.template']._fields:
             domain.append(('is_ready_for_publication', '=', True))
             domain.append(('website_published', '=', False))
-        if 'auto_publish' in self.env['product.category']._fields:
-            domain.append(('categ_id.auto_publish', '=', True))
+        if 'auto_publish' in self.env['product.public.category']._fields:
+            domain.append(('public_categ_ids.auto_publish', '=', True))
         return {
             'type': 'ir.actions.act_window',
             'name': 'Klaar voor publicatie',
@@ -92,9 +83,7 @@ class CatalogDashboard(models.Model):
         }
 
     def action_view_missing_image(self):
-        domain = [('image_1920', '=', False)]
-        if 'auto_publish' in self.env['product.category']._fields:
-            domain.append(('categ_id.auto_publish', '=', True))
+        domain = [('image_1920', '=', False), ('active', '=', True)]
         return {
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder hoofdafbeelding',
@@ -104,9 +93,7 @@ class CatalogDashboard(models.Model):
         }
 
     def action_view_missing_price(self):
-        domain = [('list_price', '<=', 0)]
-        if 'auto_publish' in self.env['product.category']._fields:
-            domain.append(('categ_id.auto_publish', '=', True))
+        domain = [('list_price', '<=', 0), ('active', '=', True)]
         return {
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder prijs',
@@ -116,9 +103,7 @@ class CatalogDashboard(models.Model):
         }
 
     def action_view_missing_description(self):
-        domain = ['|', ('description_sale', '=', False), ('description', '=', False)]
-        if 'auto_publish' in self.env['product.category']._fields:
-            domain.append(('categ_id.auto_publish', '=', True))
+        domain = ['|', ('description_sale', '=', False), ('description', '=', False), ('active', '=', True)]
         return {
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder omschrijving',
@@ -128,9 +113,7 @@ class CatalogDashboard(models.Model):
         }
 
     def action_view_missing_ean(self):
-        domain = [('barcode', '=', False)]
-        if 'auto_publish' in self.env['product.category']._fields:
-            domain.append(('categ_id.auto_publish', '=', True))
+        domain = [('barcode', '=', False), ('active', '=', True)]
         return {
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder EAN',
