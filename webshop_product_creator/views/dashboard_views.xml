@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend dashboard view met nieuwe tile -->
+    <record id="view_catalog_dashboard_form_inherit_product_creator" model="ir.ui.view">
+        <field name="name">catalog.dashboard.form.product.creator</field>
+        <field name="model">catalog.dashboard</field>
+        <field name="inherit_id" ref="webshop_catalog_dashboard.view_catalog_dashboard_form"/>
+        <field name="arch" type="xml">
+            <!-- Voeg nieuwe tile toe na missing_brand tile -->
+            <xpath expr="//div[@name='tile_missing_brand']" position="after">
+                <div class="col-lg-4 col-md-6 mb-3" name="tile_missing_products">
+                    <div class="card border-warning" style="cursor: pointer;" 
+                         t-att-onclick="'action_view_missing_products'">
+                        <div class="card-body text-center">
+                            <h3 class="card-title text-warning">
+                                <i class="fa fa-exclamation-triangle"/> Ontbrekende Producten
+                            </h3>
+                            <h1 class="display-4 mb-0">
+                                <field name="missing_products_count"/>
+                            </h1>
+                            <p class="text-muted">Producten niet in assortiment</p>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

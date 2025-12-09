@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_product_quick_create"
+              name="Nieuw Product (Snel)"
+              parent="webshop_catalog_dashboard.menu_webshop_products"
+              action="action_product_quick_create"
+              sequence="5"/>
+</odoo>

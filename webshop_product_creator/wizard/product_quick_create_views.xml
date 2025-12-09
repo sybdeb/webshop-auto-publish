@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_product_quick_create_form" model="ir.ui.view">
+        <field name="name">product.quick.create.form</field>
+        <field name="model">product.quick.create</field>
+        <field name="arch" type="xml">
+            <form string="Snel Product Aanmaken">
+                <group>
+                    <group>
+                        <field name="barcode" placeholder="8712345678901"/>
+                        <field name="default_code" placeholder="ABC123"/>
+                        <field name="name" placeholder="Productnaam"/>
+                    </group>
+                    <group>
+                        <field name="list_price"/>
+                        <field name="categ_id"/>
+                        <field name="public_categ_ids" widget="many2many_tags"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="description_sale" placeholder="Korte omschrijving voor webshop..."/>
+                </group>
+                <separator string="Leverancier Informatie (Optioneel)"/>
+                <group>
+                    <field name="create_supplier_info"/>
+                    <field name="partner_id" invisible="not create_supplier_info"/>
+                    <field name="supplier_price" invisible="not create_supplier_info"/>
+                    <field name="min_qty" invisible="not create_supplier_info"/>
+                </group>
+                <footer>
+                    <button string="Product Aanmaken" name="action_create_product" type="object" class="btn-primary"/>
+                    <button string="Annuleren" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_product_quick_create" model="ir.actions.act_window">
+        <field name="name">Nieuw Product (Snel)</field>
+        <field name="res_model">product.quick.create</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

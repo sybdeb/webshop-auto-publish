@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_product_bulk_create_form" model="ir.ui.view">
+        <field name="name">product.bulk.create.form</field>
+        <field name="model">product.bulk.create</field>
+        <field name="arch" type="xml">
+            <form string="Bulk Producten Aanmaken">
+                <group>
+                    <group>
+                        <field name="categ_id"/>
+                        <field name="public_categ_ids" widget="many2many_tags"/>
+                    </group>
+                    <group>
+                        <field name="create_supplier_info"/>
+                        <field name="skip_duplicates"/>
+                    </group>
+                </group>
+                <separator string="Te Creëren Producten"/>
+                <field name="line_ids">
+                    <list editable="bottom">
+                        <field name="will_create" widget="boolean_toggle"/>
+                        <field name="barcode"/>
+                        <field name="default_code"/>
+                        <field name="name"/>
+                        <field name="duplicate_warning" optional="show"/>
+                        <field name="error_id" invisible="1"/>
+                    </list>
+                </field>
+                <group invisible="products_created == 0">
+                    <group>
+                        <field name="products_created" readonly="1"/>
+                        <field name="products_skipped" readonly="1"/>
+                    </group>
+                </group>
+                <footer>
+                    <button string="Producten Aanmaken" name="action_create_products" type="object" class="btn-primary" 
+                            invisible="products_created &gt; 0"/>
+                    <button string="Annuleren" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_product_bulk_create" model="ir.actions.act_window">
+        <field name="name">Bulk Producten Aanmaken</field>
+        <field name="res_model">product.bulk.create</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="base.model_supplier_import_error" eval="False"/>
+        <field name="binding_view_types">list</field>
+    </record>
+</odoo>
