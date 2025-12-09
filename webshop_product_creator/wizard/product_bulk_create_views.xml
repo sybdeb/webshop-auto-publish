@@ -46,7 +46,5 @@
         <field name="res_model">product.bulk.create</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
-        <field name="binding_model_id" ref="base.model_supplier_import_error" eval="False"/>
-        <field name="binding_view_types">list</field>
     </record>
 </odoo>
