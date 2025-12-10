@@ -86,7 +86,7 @@ class ProductBulkCreate(models.TransientModel):
                     'default_code': line.default_code or False,
                     'categ_id': self.categ_id.id,
                     'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
-                    'type': 'product',
+                    'detailed_type': 'product',  # Odoo 19: type -> detailed_type
                     'sale_ok': True,
                     'purchase_ok': True,
                     'website_published': False,
