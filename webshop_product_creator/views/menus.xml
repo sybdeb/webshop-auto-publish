@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Place menu under Sales > Products -->
+    <!-- Try to use webshop_catalog_dashboard menu if installed, otherwise use sale.prod_config_main -->
     <menuitem id="menu_product_quick_create"
               name="Nieuw Product (Snel)"
-              parent="sale.prod_config_main"
+              parent="webshop_catalog_dashboard.menu_webshop_root"
               action="action_product_quick_create"
-              sequence="5"/>
+              sequence="15"/>
 </odoo>
