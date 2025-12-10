@@ -60,7 +60,7 @@ class ProductQuickCreate(models.TransientModel):
             'categ_id': self.categ_id.id,
             'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
             'description_sale': self.description_sale,
-            'detailed_type': 'product',  # Odoo 19: type -> detailed_type
+            'type': 'consu',  # Odoo 19: consu = Goods (stockable)
             'sale_ok': True,
             'purchase_ok': True,
             'website_published': False,  # Draft state
