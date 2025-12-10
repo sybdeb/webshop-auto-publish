@@ -14,6 +14,8 @@ class ProductBulkCreate(models.TransientModel):
     create_supplier_info = fields.Boolean(string='Koppel aan leveranciers', default=True)
     skip_duplicates = fields.Boolean(string='Sla duplicaten over', default=True, 
                                      help='Negeer errors met EAN/SKU die al bestaan')
+    batch_size = fields.Integer(string='Batch grootte', default=100,
+                                help='Aantal producten per batch (max 500). Voor grote imports: kies 50-100.')
     line_ids = fields.One2many('product.bulk.create.line', 'wizard_id', string='Producten')
     products_created = fields.Integer(string='Producten Aangemaakt', readonly=True, default=0)
     products_skipped = fields.Integer(string='Producten Overgeslagen', readonly=True, default=0)
@@ -52,13 +54,30 @@ class ProductBulkCreate(models.TransientModel):
         return res
 
     def action_create_products(self):
-        """Bulk aanmaken van producten"""
+        """Bulk aanmaken van producten met batch processing"""
         self.ensure_one()
+        
+        # Valideer batch_size
+        batch_size = min(self.batch_size or 100, 500)
+        lines_to_process = self.line_ids.filtered(lambda l: l.will_create)
+        total_lines = len(lines_to_process)
+        
+        if total_lines == 0:
+            raise UserError(_('Geen producten geselecteerd om aan te maken.'))
+        
+        _logger.info('Starting bulk create: %s products in batches of %s', total_lines, batch_size)
         
         created_products = []
         skipped = 0
+        batch_count = 0
         
-        for line in self.line_ids:
+        # Process in batches
+        for i in range(0, total_lines, batch_size):
+            batch = lines_to_process[i:i + batch_size]
+            batch_count += 1
+            _logger.info('Processing batch %s/%s (%s products)', batch_count, (total_lines // batch_size) + 1, len(batch))
+            
+            for line in batch:
             # Skip if user toggled off
             if not line.will_create:
                 skipped += 1
@@ -105,18 +124,24 @@ class ProductBulkCreate(models.TransientModel):
                             'min_qty': 1.0,
                         })
                 
-                # Markeer error als resolved
-                line.error_id.write({
-                    'resolved': True,
-                    'resolved_date': fields.Datetime.now(),
-                    'notes': _('Product aangemaakt: %s (ID: %s)') % (product.name, product.id)
-                })
+                # Verwijder error (of markeer als resolved als veld bestaat)
+                try:
+                    # Probeer eerst resolved=True (als veld bestaat)
+                    line.error_id.write({'resolved': True})
+                except Exception:
+                    # Anders verwijder de error regel
+                    line.error_id.unlink()
                 
                 _logger.info('Created product %s from supplier error %s', product.name, line.error_id.id)
                 
             except Exception as e:
                 _logger.error('Failed to create product from error %s: %s', line.error_id.id, str(e))
                 skipped += 1
+            
+            # Commit after each batch to avoid timeout
+            if (i + len(batch)) % batch_size == 0:
+                self.env.cr.commit()
+                _logger.info('Batch %s committed (%s products created so far)', batch_count, len(created_products))
         
         # Update counters
         self.write({

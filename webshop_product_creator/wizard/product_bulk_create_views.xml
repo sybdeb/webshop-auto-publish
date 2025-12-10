@@ -13,6 +13,7 @@
                     <group>
                         <field name="create_supplier_info"/>
                         <field name="skip_duplicates"/>
+                        <field name="batch_size"/>
                     </group>
                 </group>
                 <separator string="Te Creëren Producten"/>
