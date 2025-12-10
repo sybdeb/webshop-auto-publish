@@ -59,24 +59,31 @@ class ProductBulkCreate(models.TransientModel):
         skipped = 0
         
         for line in self.line_ids:
+            # Skip if user toggled off
             if not line.will_create:
                 skipped += 1
+                _logger.info('Skipping line %s - will_create is False', line.id)
                 continue
             
             try:
-                # Check nog een keer voor duplicates
-                if line.barcode and self.env['product.template'].search([('barcode', '=', line.barcode)], limit=1):
-                    if self.skip_duplicates:
+                # Check voor duplicates (alleen als skip_duplicates aan staat)
+                if self.skip_duplicates:
+                    existing = False
+                    if line.barcode:
+                        existing = self.env['product.template'].search([('barcode', '=', line.barcode)], limit=1)
+                    if not existing and line.default_code:
+                        existing = self.env['product.template'].search([('default_code', '=', line.default_code)], limit=1)
+                    
+                    if existing:
+                        _logger.info('Skipping duplicate: %s (matches %s)', line.name, existing.name)
                         skipped += 1
                         continue
-                    else:
-                        raise UserError(_('Product met EAN %s bestaat al!') % line.barcode)
                 
                 # Maak product aan
                 product_vals = {
                     'name': line.name,
-                    'barcode': line.barcode,
-                    'default_code': line.default_code,
+                    'barcode': line.barcode or False,
+                    'default_code': line.default_code or False,
                     'categ_id': self.categ_id.id,
                     'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
                     'type': 'product',
