@@ -27,8 +27,8 @@ class ProductBulkCreate(models.TransientModel):
         error_ids = self.env.context.get('active_ids', [])
         
         if error_ids:
-            # Voor grote batches (>500): skip preview, create direct
-            if len(error_ids) > 500:
+            # Voor grote batches (>1000): skip preview, create direct
+            if len(error_ids) > 1000:
                 _logger.info('Large batch detected (%s errors) - skipping preview', len(error_ids))
                 res['error_ids'] = [(6, 0, error_ids)]
                 # Lege line_ids - lines worden on-the-fly aangemaakt in action_create_products
@@ -217,15 +217,8 @@ class ProductBulkCreate(models.TransientModel):
             error_mapping = {}  # track which error belongs to which product
             
             for error in batch:
-                # Debug: log what fields are available
-                if not hasattr(error, 'product_name'):
-                    _logger.error('ERROR: error object has no product_name field! Available fields: %s', dir(error))
-                    _logger.error('Error ID: %s, Barcode: %s', error.id, getattr(error, 'barcode', 'NO BARCODE FIELD'))
-                    skipped += 1
-                    continue
-                
-                if not error.product_name:
-                    _logger.info('Skipping error %s: no product name', error.id)
+                # Skip if no product name
+                if not getattr(error, 'product_name', None):
                     skipped += 1
                     continue
                 
@@ -257,14 +250,15 @@ class ProductBulkCreate(models.TransientModel):
                 products = self.env['product.template'].with_context(context).create(product_vals_list)
                 created_products.extend(products.ids)
                 
-                # Cleanup errors
-                for idx, product in enumerate(products):
-                    error = error_mapping.get(idx)
-                    if error:
-                        try:
-                            error.write({'resolved': True})
-                        except Exception:
-                            error.unlink()
+                # Cleanup errors - bulk delete is faster
+                errors_to_delete = [error_mapping.get(idx) for idx in range(len(products)) if error_mapping.get(idx)]
+                if errors_to_delete:
+                    try:
+                        # Try bulk delete
+                        self.env['supplier.import.error'].browse([e.id for e in errors_to_delete]).unlink()
+                        _logger.info('Deleted %s error records', len(errors_to_delete))
+                    except Exception as e:
+                        _logger.error('Failed to delete errors: %s', str(e))
             
             # Commit after batch
             self.env.cr.commit()
