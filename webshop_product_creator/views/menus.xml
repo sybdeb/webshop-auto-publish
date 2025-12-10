@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Place menu under Purchase > Products if webshop_catalog_dashboard not installed -->
+    <!-- Place menu under Sales > Products -->
     <menuitem id="menu_product_quick_create"
               name="Nieuw Product (Snel)"
-              parent="purchase.menu_procurement_management"
+              parent="sale.prod_config_main"
               action="action_product_quick_create"
               sequence="5"/>
 </odoo>
