@@ -217,7 +217,15 @@ class ProductBulkCreate(models.TransientModel):
             error_mapping = {}  # track which error belongs to which product
             
             for error in batch:
+                # Debug: log what fields are available
+                if not hasattr(error, 'product_name'):
+                    _logger.error('ERROR: error object has no product_name field! Available fields: %s', dir(error))
+                    _logger.error('Error ID: %s, Barcode: %s', error.id, getattr(error, 'barcode', 'NO BARCODE FIELD'))
+                    skipped += 1
+                    continue
+                
                 if not error.product_name:
+                    _logger.info('Skipping error %s: no product name', error.id)
                     skipped += 1
                     continue
                 
