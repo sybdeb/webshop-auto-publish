@@ -58,6 +58,15 @@ class ProductBulkCreate(models.TransientModel):
                     duplicate_warning = False
                     will_create = True
                     
+                    # Get product name with fallback
+                    product_name = (error.product_name or '').strip()
+                    if not product_name:
+                        product_name = error.product_code or error.barcode or ''
+                        if product_name:
+                            product_name = 'Product ' + str(product_name)
+                        else:
+                            product_name = 'Nieuw Product'
+                    
                     if error.barcode and error.barcode in existing_barcodes:
                         duplicate_warning = existing_barcodes[error.barcode]
                         will_create = False
@@ -69,7 +78,7 @@ class ProductBulkCreate(models.TransientModel):
                         'error_id': error.id,
                         'barcode': error.barcode,
                         'default_code': error.product_code,
-                        'name': error.product_name or 'Nieuw Product',
+                        'name': product_name,
                         'will_create': will_create,
                         'duplicate_warning': duplicate_warning,
                     }))
@@ -217,10 +226,17 @@ class ProductBulkCreate(models.TransientModel):
             error_mapping = {}  # track which error belongs to which product
             
             for error in batch:
-                # Skip if no product name
-                if not getattr(error, 'product_name', None):
-                    skipped += 1
-                    continue
+                # Get product name with fallback to SKU or barcode
+                product_name = getattr(error, 'product_name', None) or ''
+                product_name = product_name.strip()
+                
+                if not product_name:
+                    # Fallback: use SKU or barcode as name
+                    product_name = error.product_code or error.barcode or None
+                    if not product_name:
+                        skipped += 1
+                        continue
+                    product_name = 'Product ' + str(product_name)
                 
                 # Skip duplicates if enabled
                 if self.skip_duplicates:
@@ -232,7 +248,7 @@ class ProductBulkCreate(models.TransientModel):
                         continue
                 
                 vals = {
-                    'name': error.product_name,
+                    'name': product_name,
                     'barcode': error.barcode or False,
                     'default_code': error.product_code or False,
                     'categ_id': self.categ_id.id,
