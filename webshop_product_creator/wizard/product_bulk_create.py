@@ -78,65 +78,65 @@ class ProductBulkCreate(models.TransientModel):
             _logger.info('Processing batch %s/%s (%s products)', batch_count, (total_lines // batch_size) + 1, len(batch))
             
             for line in batch:
-            # Skip if user toggled off
-            if not line.will_create:
-                skipped += 1
-                _logger.info('Skipping line %s - will_create is False', line.id)
-                continue
-            
-            try:
-                # Check voor duplicates (alleen als skip_duplicates aan staat)
-                if self.skip_duplicates:
-                    existing = False
-                    if line.barcode:
-                        existing = self.env['product.template'].search([('barcode', '=', line.barcode)], limit=1)
-                    if not existing and line.default_code:
-                        existing = self.env['product.template'].search([('default_code', '=', line.default_code)], limit=1)
-                    
-                    if existing:
-                        _logger.info('Skipping duplicate: %s (matches %s)', line.name, existing.name)
-                        skipped += 1
-                        continue
+                # Skip if user toggled off
+                if not line.will_create:
+                    skipped += 1
+                    _logger.info('Skipping line %s - will_create is False', line.id)
+                    continue
                 
-                # Maak product aan
-                product_vals = {
-                    'name': line.name,
-                    'barcode': line.barcode or False,
-                    'default_code': line.default_code or False,
-                    'categ_id': self.categ_id.id,
-                    'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
-                    'type': 'consu',  # Odoo 19: consu = Goods (stockable)
-                    'sale_ok': True,
-                    'purchase_ok': True,
-                    'website_published': False,
-                }
-                
-                product = self.env['product.template'].create(product_vals)
-                created_products.append(product.id)
-                
-                # Maak leverancier info als beschikbaar
-                if self.create_supplier_info and line.error_id.history_id:
-                    history = line.error_id.history_id
-                    if history.partner_id:
-                        self.env['product.supplierinfo'].create({
-                            'partner_id': history.partner_id.id,
-                            'product_tmpl_id': product.id,
-                            'min_qty': 1.0,
-                        })
-                
-                # Verwijder error (of markeer als resolved als veld bestaat)
                 try:
-                    # Probeer eerst resolved=True (als veld bestaat)
-                    line.error_id.write({'resolved': True})
-                except Exception:
-                    # Anders verwijder de error regel
-                    line.error_id.unlink()
-                
-                _logger.info('Created product %s from supplier error %s', product.name, line.error_id.id)
-                
-            except Exception as e:
-                _logger.error('Failed to create product from error %s: %s', line.error_id.id, str(e))
-                skipped += 1
+                    # Check voor duplicates (alleen als skip_duplicates aan staat)
+                    if self.skip_duplicates:
+                        existing = False
+                        if line.barcode:
+                            existing = self.env['product.template'].search([('barcode', '=', line.barcode)], limit=1)
+                        if not existing and line.default_code:
+                            existing = self.env['product.template'].search([('default_code', '=', line.default_code)], limit=1)
+                        
+                        if existing:
+                            _logger.info('Skipping duplicate: %s (matches %s)', line.name, existing.name)
+                            skipped += 1
+                            continue
+                    
+                    # Maak product aan
+                    product_vals = {
+                        'name': line.name,
+                        'barcode': line.barcode or False,
+                        'default_code': line.default_code or False,
+                        'categ_id': self.categ_id.id,
+                        'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
+                        'type': 'consu',  # Odoo 19: consu = Goods (stockable)
+                        'sale_ok': True,
+                        'purchase_ok': True,
+                        'website_published': False,
+                    }
+                    
+                    product = self.env['product.template'].create(product_vals)
+                    created_products.append(product.id)
+                    
+                    # Maak leverancier info als beschikbaar
+                    if self.create_supplier_info and line.error_id.history_id:
+                        history = line.error_id.history_id
+                        if history.partner_id:
+                            self.env['product.supplierinfo'].create({
+                                'partner_id': history.partner_id.id,
+                                'product_tmpl_id': product.id,
+                                'min_qty': 1.0,
+                            })
+                    
+                    # Verwijder error (of markeer als resolved als veld bestaat)
+                    try:
+                        # Probeer eerst resolved=True (als veld bestaat)
+                        line.error_id.write({'resolved': True})
+                    except Exception:
+                        # Anders verwijder de error regel
+                        line.error_id.unlink()
+                    
+                    _logger.info('Created product %s from supplier error %s', product.name, line.error_id.id)
+                    
+                except Exception as e:
+                    _logger.error('Failed to create product from error %s: %s', line.error_id.id, str(e))
+                    skipped += 1
             
             # Commit after each batch to avoid timeout
             if (i + len(batch)) % batch_size == 0:
