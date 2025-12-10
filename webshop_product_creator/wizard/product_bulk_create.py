@@ -22,43 +22,73 @@ class ProductBulkCreate(models.TransientModel):
 
     @api.model
     def default_get(self, fields_list):
-        """Pre-fill wizard met geselecteerde errors"""
+        """Pre-fill wizard met geselecteerde errors - OPTIMIZED for large batches"""
         res = super().default_get(fields_list)
         error_ids = self.env.context.get('active_ids', [])
         
         if error_ids:
-            errors = self.env['supplier.import.error'].browse(error_ids)
-            res['error_ids'] = [(6, 0, error_ids)]
-            
-            # Maak preview lines
-            lines = []
-            for error in errors:
-                # Check duplicate
-                existing = False
-                if error.barcode:
-                    existing = self.env['product.template'].search([('barcode', '=', error.barcode)], limit=1)
-                if not existing and error.product_code:
-                    existing = self.env['product.template'].search([('default_code', '=', error.product_code)], limit=1)
+            # Voor grote batches (>500): skip preview, create direct
+            if len(error_ids) > 500:
+                _logger.info('Large batch detected (%s errors) - skipping preview', len(error_ids))
+                res['error_ids'] = [(6, 0, error_ids)]
+                # Lege line_ids - lines worden on-the-fly aangemaakt in action_create_products
+            else:
+                # Voor kleine batches: toon preview met duplicate check
+                errors = self.env['supplier.import.error'].browse(error_ids)
+                res['error_ids'] = [(6, 0, error_ids)]
                 
-                lines.append((0, 0, {
-                    'error_id': error.id,
-                    'barcode': error.barcode,
-                    'default_code': error.product_code,
-                    'name': error.product_name or 'Nieuw Product',
-                    'will_create': not existing,
-                    'duplicate_warning': existing.name if existing else False,
-                }))
-            
-            res['line_ids'] = lines
+                # Bulk duplicate check (veel sneller dan per error)
+                barcodes = [e.barcode for e in errors if e.barcode]
+                codes = [e.product_code for e in errors if e.product_code]
+                
+                existing_barcodes = {}
+                existing_codes = {}
+                
+                if barcodes:
+                    existing_products = self.env['product.template'].search([('barcode', 'in', barcodes)])
+                    existing_barcodes = {p.barcode: p.name for p in existing_products}
+                
+                if codes:
+                    existing_products = self.env['product.template'].search([('default_code', 'in', codes)])
+                    existing_codes = {p.default_code: p.name for p in existing_products}
+                
+                # Maak preview lines
+                lines = []
+                for error in errors:
+                    duplicate_warning = False
+                    will_create = True
+                    
+                    if error.barcode and error.barcode in existing_barcodes:
+                        duplicate_warning = existing_barcodes[error.barcode]
+                        will_create = False
+                    elif error.product_code and error.product_code in existing_codes:
+                        duplicate_warning = existing_codes[error.product_code]
+                        will_create = False
+                    
+                    lines.append((0, 0, {
+                        'error_id': error.id,
+                        'barcode': error.barcode,
+                        'default_code': error.product_code,
+                        'name': error.product_name or 'Nieuw Product',
+                        'will_create': will_create,
+                        'duplicate_warning': duplicate_warning,
+                    }))
+                
+                res['line_ids'] = lines
         
         return res
 
     def action_create_products(self):
-        """Bulk aanmaken van producten met batch processing"""
+        """Bulk aanmaken van producten met batch processing - OPTIMIZED"""
         self.ensure_one()
         
         # Valideer batch_size
         batch_size = min(self.batch_size or 100, 500)
+        
+        # Voor grote batches zonder preview: maak direct aan vanuit errors
+        if not self.line_ids and self.error_ids:
+            return self._create_from_errors_direct()
+        
         lines_to_process = self.line_ids.filtered(lambda l: l.will_create)
         total_lines = len(lines_to_process)
         
@@ -150,6 +180,91 @@ class ProductBulkCreate(models.TransientModel):
         })
         
         # Toon resultaat
+        if created_products:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('%s Producten Aangemaakt') % len(created_products),
+                'res_model': 'product.template',
+                'view_mode': 'kanban,form',
+                'domain': [('id', 'in', created_products)],
+                'target': 'current',
+            }
+        else:
+            raise UserError(_('Geen producten aangemaakt. %s overgeslagen.') % skipped)
+    
+    def _create_from_errors_direct(self):
+        """Direct aanmaken zonder preview - voor grote batches (>500)"""
+        batch_size = min(self.batch_size or 100, 500)
+        errors = self.error_ids
+        total = len(errors)
+        
+        _logger.info('DIRECT CREATE: Processing %s errors in batches of %s', total, batch_size)
+        
+        created_products = []
+        skipped = 0
+        batch_count = 0
+        
+        # Disable mail tracking for performance
+        context = dict(self.env.context, tracking_disable=True, mail_create_nolog=True)
+        
+        for i in range(0, total, batch_size):
+            batch = errors[i:i + batch_size]
+            batch_count += 1
+            _logger.info('Processing batch %s/%s (%s errors)', batch_count, (total // batch_size) + 1, len(batch))
+            
+            # Prepare bulk product vals
+            product_vals_list = []
+            error_mapping = {}  # track which error belongs to which product
+            
+            for error in batch:
+                if not error.product_name:
+                    skipped += 1
+                    continue
+                
+                # Skip duplicates if enabled
+                if self.skip_duplicates:
+                    if error.barcode and self.env['product.template'].search([('barcode', '=', error.barcode)], limit=1):
+                        skipped += 1
+                        continue
+                    if error.product_code and self.env['product.template'].search([('default_code', '=', error.product_code)], limit=1):
+                        skipped += 1
+                        continue
+                
+                vals = {
+                    'name': error.product_name,
+                    'barcode': error.barcode or False,
+                    'default_code': error.product_code or False,
+                    'categ_id': self.categ_id.id,
+                    'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
+                    'type': 'consu',
+                    'sale_ok': True,
+                    'purchase_ok': True,
+                    'website_published': False,
+                }
+                product_vals_list.append(vals)
+                error_mapping[len(product_vals_list) - 1] = error
+            
+            # Bulk create products
+            if product_vals_list:
+                products = self.env['product.template'].with_context(context).create(product_vals_list)
+                created_products.extend(products.ids)
+                
+                # Cleanup errors
+                for idx, product in enumerate(products):
+                    error = error_mapping.get(idx)
+                    if error:
+                        try:
+                            error.write({'resolved': True})
+                        except Exception:
+                            error.unlink()
+            
+            # Commit after batch
+            self.env.cr.commit()
+            _logger.info('Batch %s COMMITTED: %s products created (total: %s)', batch_count, len(product_vals_list), len(created_products))
+        
+        # Return result
+        _logger.info('COMPLETED: %s products created, %s skipped', len(created_products), skipped)
+        
         if created_products:
             return {
                 'type': 'ir.actions.act_window',
