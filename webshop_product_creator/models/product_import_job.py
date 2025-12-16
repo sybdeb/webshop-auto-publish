@@ -217,12 +217,27 @@ class ProductImportJob(models.Model):
     @api.model
     def cron_process_pending_jobs(self):
         """Cron job to process pending import jobs"""
-        # Process one job at a time to avoid overload
-        pending_job = self.search([('state', '=', 'pending')], limit=1, order='create_date asc')
+        # Get max parallel jobs from system parameter (default: 2)
+        ICP = self.env['ir.config_parameter'].sudo()
+        max_parallel_jobs = int(ICP.get_param('webshop_product_creator.max_parallel_jobs', 2))
         
-        if pending_job:
-            _logger.info('Cron: Found pending job %s', pending_job.id)
-            pending_job.action_process_job()
+        # Check if there's already a job being processed
+        processing_jobs = self.search([('state', '=', 'processing')])
+        
+        if len(processing_jobs) >= max_parallel_jobs:
+            _logger.info('Cron: %s jobs already processing (max: %s), waiting...', 
+                        len(processing_jobs), max_parallel_jobs)
+            return
+        
+        # Process multiple pending jobs (up to max_parallel_jobs)
+        jobs_to_start = max_parallel_jobs - len(processing_jobs)
+        pending_jobs = self.search([('state', '=', 'pending')], limit=jobs_to_start, order='create_date asc')
+        
+        if pending_jobs:
+            _logger.info('Cron: Found %s pending job(s), starting processing', len(pending_jobs))
+            for job in pending_jobs:
+                # Process directly in new thread-like fashion using env
+                job.action_process_job()
         else:
             _logger.debug('Cron: No pending jobs found')
 

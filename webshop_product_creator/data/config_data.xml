@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- System Parameters -->
+    <record id="config_max_parallel_jobs" model="ir.config_parameter">
+        <field name="key">webshop_product_creator.max_parallel_jobs</field>
+        <field name="value">2</field>
+    </record>
+</odoo>
