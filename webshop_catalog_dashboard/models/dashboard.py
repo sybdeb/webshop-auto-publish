@@ -38,7 +38,7 @@ class CatalogDashboard(models.Model):
     def _compute_missing_price(self):
         for rec in self:
             ProductTemplate = self.env['product.template']
-            domain = [('list_price', '<=', 0), ('active', '=', True)]
+            domain = [('list_price', '<=', 1.0), ('active', '=', True)]
             rec.missing_price_count = ProductTemplate.search_count(domain)
 
     @api.depends_context('uid')
@@ -93,7 +93,7 @@ class CatalogDashboard(models.Model):
         }
 
     def action_view_missing_price(self):
-        domain = [('list_price', '<=', 0), ('active', '=', True)]
+        domain = [('list_price', '<=', 1.0), ('active', '=', True)]
         return {
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder prijs',
