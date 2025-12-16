@@ -19,12 +19,12 @@ Integreert met:
     'author': 'Nerbys',
     'website': 'https://nerbys.nl',
     'license': 'LGPL-3',
-    'depends': ['purchase', 'product', 'website_sale', 'product_supplier_sync'],
+    'depends': ['purchase', 'product', 'website_sale', 'product_supplier_sync', 'webshop_catalog_dashboard'],
     'data': [
         'security/ir.model.access.csv',
         'wizard/product_quick_create_views.xml',
         'wizard/product_bulk_create_views.xml',
-        # 'views/dashboard_views.xml',  # Requires webshop_catalog_dashboard
+        'views/dashboard_views.xml',
         'views/menus.xml',
     ],
     'installable': True,
