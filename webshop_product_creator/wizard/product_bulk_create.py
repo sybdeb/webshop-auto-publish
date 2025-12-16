@@ -99,10 +99,22 @@ class ProductBulkCreate(models.TransientModel):
             return self._create_from_errors_direct()
         
         lines_to_process = self.line_ids.filtered(lambda l: l.will_create)
+        
+        lines_to_process = self.line_ids.filtered(lambda l: l.will_create)
         total_lines = len(lines_to_process)
         
         if total_lines == 0:
             raise UserError(_('Geen producten geselecteerd om aan te maken.'))
+        
+        # Waarschuwing voor zeer grote imports
+        if total_lines > 10000:
+            raise UserError(_(
+                'Je probeert %s producten aan te maken. Dit is te veel voor één keer.\n\n'
+                'Aanbeveling:\n'
+                '1. Filter de supplier errors eerst (bijv. per leverancier)\n'
+                '2. Maak maximaal 5000-10000 producten per keer aan\n'
+                '3. Dit voorkomt timeouts en houdt het systeem responsief'
+            ) % total_lines)
         
         _logger.info('Starting bulk create: %s products in batches of %s', total_lines, batch_size)
         
