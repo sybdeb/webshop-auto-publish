@@ -106,16 +106,32 @@ class ProductBulkCreate(models.TransientModel):
         if total_lines == 0:
             raise UserError(_('Geen producten geselecteerd om aan te maken.'))
         
-        # Waarschuwing voor zeer grote imports
-        if total_lines > 10000:
-            raise UserError(_(
-                'Je probeert %s producten aan te maken. Dit is te veel voor één keer.\n\n'
-                'Aanbeveling:\n'
-                '1. Filter de supplier errors eerst (bijv. per leverancier)\n'
-                '2. Maak maximaal 5000-10000 producten per keer aan\n'
-                '3. Dit voorkomt timeouts en houdt het systeem responsief'
-            ) % total_lines)
+        # Voor grote imports (>5000): maak een job aan voor achtergrond processing
+        if total_lines > 5000:
+            job = self.env['product.import.job'].create({
+                'name': _('Bulk Import - %s producten') % total_lines,
+                'error_ids': [(6, 0, [line.error_id.id for line in lines_to_process if line.error_id])],
+                'categ_id': self.categ_id.id,
+                'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
+                'create_supplier_info': self.create_supplier_info,
+                'skip_duplicates': self.skip_duplicates,
+                'batch_size': batch_size,
+                'state': 'pending',
+            })
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Import Job Aangemaakt'),
+                    'message': _('Job met %s producten is aangemaakt en wordt binnen 1 minuut verwerkt. Bekijk de voortgang bij Import Jobs.') % total_lines,
+                    'type': 'success',
+                    'sticky': False,
+                    'next': job.action_view_job(),
+                }
+            }
         
+        # Voor kleinere imports (<5000): direct verwerken
         _logger.info('Starting bulk create: %s products in batches of %s', total_lines, batch_size)
         
         created_products = []
