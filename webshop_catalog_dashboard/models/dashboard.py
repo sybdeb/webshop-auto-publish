@@ -45,7 +45,7 @@ class CatalogDashboard(models.Model):
     def _compute_missing_description(self):
         for rec in self:
             ProductTemplate = self.env['product.template']
-            domain = ['|', ('description_sale', '=', False), ('description', '=', False), ('active', '=', True)]
+            domain = [('description_sale', '=', False), ('active', '=', True)]
             rec.missing_description_count = ProductTemplate.search_count(domain)
 
     @api.depends_context('uid')
@@ -103,7 +103,7 @@ class CatalogDashboard(models.Model):
         }
 
     def action_view_missing_description(self):
-        domain = ['|', ('description_sale', '=', False), ('description', '=', False), ('active', '=', True)]
+        domain = [('description_sale', '=', False), ('active', '=', True)]
         return {
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder omschrijving',
