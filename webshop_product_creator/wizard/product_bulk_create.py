@@ -162,6 +162,15 @@ class ProductBulkCreate(models.TransientModel):
                         
                         if existing:
                             _logger.info('Skipping duplicate: %s (matches %s)', line.name, existing.name)
+                            # Resolve/delete the error since product exists
+                            if line.error_id:
+                                try:
+                                    line.error_id.write({'resolved': True})
+                                except Exception:
+                                    try:
+                                        line.error_id.unlink()
+                                    except Exception:
+                                        pass
                             skipped += 1
                             continue
                     
@@ -292,10 +301,21 @@ class ProductBulkCreate(models.TransientModel):
                 
                 # Skip duplicates if enabled
                 if self.skip_duplicates:
+                    is_duplicate = False
                     if error.barcode and self.env['product.template'].search([('barcode', '=', error.barcode)], limit=1):
-                        skipped += 1
-                        continue
-                    if error.product_code and self.env['product.template'].search([('default_code', '=', error.product_code)], limit=1):
+                        is_duplicate = True
+                    if not is_duplicate and error.product_code and self.env['product.template'].search([('default_code', '=', error.product_code)], limit=1):
+                        is_duplicate = True
+                    
+                    if is_duplicate:
+                        # Resolve/delete the error since product exists
+                        try:
+                            error.write({'resolved': True})
+                        except Exception:
+                            try:
+                                error.unlink()
+                            except Exception:
+                                pass
                         skipped += 1
                         continue
                 

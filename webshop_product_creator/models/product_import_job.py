@@ -107,6 +107,15 @@ class ProductImportJob(models.Model):
                                 ], limit=1)
                             
                             if existing:
+                                # Product already exists - resolve/delete the error
+                                try:
+                                    if hasattr(error, 'resolved'):
+                                        error.write({'resolved': True})
+                                    else:
+                                        error.unlink()
+                                except Exception as e:
+                                    _logger.warning('Job %s: Failed to resolve duplicate error %s: %s', 
+                                                  self.id, error.id, str(e))
                                 skipped_count += 1
                                 continue
                         
