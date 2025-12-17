@@ -235,6 +235,30 @@ class ProductBulkCreate(models.TransientModel):
         errors = self.error_ids
         total = len(errors)
         
+        # Voor grote imports (>5000): maak een job aan voor achtergrond processing
+        if total > 5000:
+            job = self.env['product.import.job'].create({
+                'name': _('Bulk Import - %s producten') % total,
+                'error_ids': [(6, 0, errors.ids)],
+                'categ_id': self.categ_id.id,
+                'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
+                'create_supplier_info': self.create_supplier_info,
+                'skip_duplicates': self.skip_duplicates,
+                'batch_size': batch_size,
+                'state': 'pending',
+            })
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Import Job Aangemaakt'),
+                    'message': _('Job met %s producten is aangemaakt en wordt binnen 1 minuut verwerkt. Bekijk de voortgang bij Import Jobs.') % total,
+                    'type': 'success',
+                    'sticky': False,
+                }
+            }
+        
         _logger.info('DIRECT CREATE: Processing %s errors in batches of %s', total, batch_size)
         
         created_products = []
