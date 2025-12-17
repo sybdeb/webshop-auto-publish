@@ -119,17 +119,15 @@ class ProductBulkCreate(models.TransientModel):
                 'state': 'pending',
             })
             
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Import Job Aangemaakt'),
-                    'message': _('Job met %s producten is aangemaakt en wordt binnen 1 minuut verwerkt. Bekijk de voortgang bij Import Jobs.') % total_lines,
-                    'type': 'success',
-                    'sticky': False,
-                    'next': job.action_view_job(),
-                }
-            }
+            # Toon notificatie en sluit wizard
+            self.env['bus.bus']._sendone(self.env.user.partner_id, 'simple_notification', {
+                'title': _('Import Job Aangemaakt'),
+                'message': _('Job met %s producten is aangemaakt en wordt binnen 1 minuut verwerkt. Bekijk de voortgang bij Import Jobs.') % total_lines,
+                'type': 'success',
+                'sticky': False,
+            })
+            
+            return {'type': 'ir.actions.act_window_close'}
         
         # Voor kleinere imports (<5000): direct verwerken
         _logger.info('Starting bulk create: %s products in batches of %s', total_lines, batch_size)
@@ -257,16 +255,15 @@ class ProductBulkCreate(models.TransientModel):
                 'state': 'pending',
             })
             
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Import Job Aangemaakt'),
-                    'message': _('Job met %s producten is aangemaakt en wordt binnen 1 minuut verwerkt. Bekijk de voortgang bij Import Jobs.') % total,
-                    'type': 'success',
-                    'sticky': False,
-                }
-            }
+            # Toon notificatie en sluit wizard
+            self.env['bus.bus']._sendone(self.env.user.partner_id, 'simple_notification', {
+                'title': _('Import Job Aangemaakt'),
+                'message': _('Job met %s producten is aangemaakt en wordt binnen 1 minuut verwerkt. Bekijk de voortgang bij Import Jobs.') % total,
+                'type': 'success',
+                'sticky': False,
+            })
+            
+            return {'type': 'ir.actions.act_window_close'}
         
         _logger.info('DIRECT CREATE: Processing %s errors in batches of %s', total, batch_size)
         
