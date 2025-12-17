@@ -138,9 +138,9 @@ class ProductImportJob(models.Model):
                         # Create supplier info if applicable
                         if self.create_supplier_info and error.history_id:
                             history = error.history_id
-                            if history.partner_id:
+                            if history.supplier_id:
                                 self.env['product.supplierinfo'].create({
-                                    'partner_id': history.partner_id.id,
+                                    'partner_id': history.supplier_id.id,
                                     'product_tmpl_id': product.id,
                                     'min_qty': 1.0,
                                 })

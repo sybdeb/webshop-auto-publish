@@ -184,9 +184,9 @@ class ProductBulkCreate(models.TransientModel):
                     # Maak leverancier info als beschikbaar
                     if self.create_supplier_info and line.error_id.history_id:
                         history = line.error_id.history_id
-                        if history.partner_id:
+                        if history.supplier_id:
                             self.env['product.supplierinfo'].create({
-                                'partner_id': history.partner_id.id,
+                                'partner_id': history.supplier_id.id,
                                 'product_tmpl_id': product.id,
                                 'min_qty': 1.0,
                             })
