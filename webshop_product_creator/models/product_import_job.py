@@ -236,9 +236,27 @@ class ProductImportJob(models.Model):
         # Check if there's already a job being processed
         processing_jobs = self.search([('state', '=', 'processing')])
         
+        # Check for stuck jobs (processing for more than 1 hour)
+        if processing_jobs:
+            from datetime import datetime, timedelta
+            one_hour_ago = fields.Datetime.now() - timedelta(hours=1)
+            stuck_jobs = processing_jobs.filtered(lambda j: j.start_date and j.start_date < one_hour_ago)
+            
+            if stuck_jobs:
+                _logger.warning('Cron: Found %s stuck job(s) (running >1h), marking as failed: %s', 
+                              len(stuck_jobs), stuck_jobs.ids)
+                for job in stuck_jobs:
+                    job.write({
+                        'state': 'failed',
+                        'end_date': fields.Datetime.now(),
+                        'error_message': 'Job timeout: Processing took longer than 1 hour'
+                    })
+                # Refresh processing_jobs list
+                processing_jobs = self.search([('state', '=', 'processing')])
+        
         if len(processing_jobs) >= max_parallel_jobs:
-            _logger.info('Cron: %s jobs already processing (max: %s), waiting...', 
-                        len(processing_jobs), max_parallel_jobs)
+            _logger.info('Cron: %s jobs already processing (max: %s), waiting... Job IDs: %s', 
+                        len(processing_jobs), max_parallel_jobs, processing_jobs.ids)
             return
         
         # Process multiple pending jobs (up to max_parallel_jobs)
