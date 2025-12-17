@@ -149,10 +149,13 @@ class ProductImportJob(models.Model):
                         try:
                             if hasattr(error, 'resolved'):
                                 error.write({'resolved': True})
+                                _logger.debug('Job %s: Marked error %s as resolved', self.id, error.id)
                             else:
                                 error.unlink()
-                        except Exception:
-                            pass
+                                _logger.debug('Job %s: Deleted error %s', self.id, error.id)
+                        except Exception as e:
+                            _logger.warning('Job %s: Failed to resolve/delete error %s: %s', 
+                                          self.id, error.id, str(e))
                         
                     except Exception as e:
                         _logger.error('Job %s: Failed to create product from error %s: %s', 
