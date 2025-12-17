@@ -36,6 +36,13 @@ def uninstall_hook(env):
         """)
         _logger.info('Removed server actions')
         
+        # Remove config parameters
+        env.cr.execute("""
+            DELETE FROM ir_config_parameter 
+            WHERE key LIKE 'webshop_product_creator.%'
+        """)
+        _logger.info('Removed config parameters')
+        
         # Remove model fields
         env.cr.execute("""
             DELETE FROM ir_model_fields 
