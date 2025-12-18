@@ -45,8 +45,15 @@ class CatalogDashboard(models.Model):
     def _compute_missing_description(self):
         for rec in self:
             ProductTemplate = self.env['product.template']
-            domain = [('description_sale', '=', False), ('active', '=', True)]
-            rec.missing_description_count = ProductTemplate.search_count(domain)
+            # Gebruik validation_errors als quality_rules geïnstalleerd is
+            if 'validation_errors' in ProductTemplate._fields:
+                # Tel producten met beschrijving fout in validation_errors
+                all_products = ProductTemplate.search([('active', '=', True)])
+                rec.missing_description_count = len([p for p in all_products if p.validation_errors and 'Mist e-commerce beschrijving' in p.validation_errors])
+            else:
+                # Fallback: simpele check
+                domain = [('description_sale', '=', False), ('active', '=', True)]
+                rec.missing_description_count = ProductTemplate.search_count(domain)
 
     @api.depends_context('uid')
     def _compute_missing_ean(self):
@@ -103,7 +110,11 @@ class CatalogDashboard(models.Model):
         }
 
     def action_view_missing_description(self):
-        domain = [('description_sale', '=', False), ('active', '=', True)]
+        # Als quality_rules geïnstalleerd is, gebruik validation_errors
+        if 'validation_errors' in self.env['product.template']._fields:
+            domain = [('validation_errors', 'ilike', 'Mist e-commerce beschrijving'), ('active', '=', True)]
+        else:
+            domain = [('description_sale', '=', False), ('active', '=', True)]
         return {
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder omschrijving',

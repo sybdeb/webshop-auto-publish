@@ -35,12 +35,12 @@ class ProductPublicCategory(models.Model):
         help='Product moet een merk/brand hebben'
     )
     require_short_description = fields.Boolean(
-        string='Vereist Korte Omschrijving',
-        default=True,
-        help='Product moet een korte omschrijving hebben (Website Beschrijving)'
+        string='Vereist Verkoop Notitie',
+        default=False,
+        help='Product moet een korte verkoop notitie hebben (intern gebruik)'
     )
     require_long_description = fields.Boolean(
-        string='Vereist Lange Omschrijving',
+        string='Vereist E-commerce Beschrijving',
         default=True,
-        help='Product moet een lange omschrijving hebben (Verkoop Omschrijving)'
+        help='Product moet een e-commerce/website beschrijving hebben'
     )
