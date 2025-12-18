@@ -22,7 +22,8 @@ class CatalogDashboard(models.Model):
                 rec.ready_count = ProductTemplate.search_count([
                     ('is_ready_for_publication', '=', True),
                     ('website_published', '=', False),
-                    ('public_categ_ids.auto_publish', '=', True)
+                    ('public_categ_ids.auto_publish', '=', True),
+                    ('active', '=', True)
                 ])
             else:
                 rec.ready_count = 0
@@ -38,22 +39,15 @@ class CatalogDashboard(models.Model):
     def _compute_missing_price(self):
         for rec in self:
             ProductTemplate = self.env['product.template']
-            domain = [('list_price', '<=', 1.0), ('active', '=', True)]
+            domain = [('list_price', '<=', 0), ('active', '=', True)]
             rec.missing_price_count = ProductTemplate.search_count(domain)
 
     @api.depends_context('uid')
     def _compute_missing_description(self):
         for rec in self:
             ProductTemplate = self.env['product.template']
-            # Gebruik validation_errors als quality_rules geïnstalleerd is
-            if 'validation_errors' in ProductTemplate._fields:
-                # Tel producten met beschrijving fout in validation_errors
-                all_products = ProductTemplate.search([('active', '=', True)])
-                rec.missing_description_count = len([p for p in all_products if p.validation_errors and 'Mist e-commerce beschrijving' in p.validation_errors])
-            else:
-                # Fallback: simpele check
-                domain = [('description_sale', '=', False), ('active', '=', True)]
-                rec.missing_description_count = ProductTemplate.search_count(domain)
+            domain = ['|', ('description_sale', '=', False), ('description', '=', False), ('active', '=', True)]
+            rec.missing_description_count = ProductTemplate.search_count(domain)
 
     @api.depends_context('uid')
     def _compute_missing_ean(self):
@@ -75,7 +69,7 @@ class CatalogDashboard(models.Model):
             rec.price_drop_count = 0
 
     def action_view_ready_products(self):
-        domain = []
+        domain = [('active', '=', True)]
         if 'is_ready_for_publication' in self.env['product.template']._fields:
             domain.append(('is_ready_for_publication', '=', True))
             domain.append(('website_published', '=', False))
@@ -100,7 +94,7 @@ class CatalogDashboard(models.Model):
         }
 
     def action_view_missing_price(self):
-        domain = [('list_price', '<=', 1.0), ('active', '=', True)]
+        domain = [('list_price', '<=', 0), ('active', '=', True)]
         return {
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder prijs',
@@ -110,11 +104,7 @@ class CatalogDashboard(models.Model):
         }
 
     def action_view_missing_description(self):
-        # Als quality_rules geïnstalleerd is, gebruik validation_errors
-        if 'validation_errors' in self.env['product.template']._fields:
-            domain = [('validation_errors', 'ilike', 'Mist e-commerce beschrijving'), ('active', '=', True)]
-        else:
-            domain = [('description_sale', '=', False), ('active', '=', True)]
+        domain = ['|', ('description_sale', '=', False), ('description', '=', False), ('active', '=', True)]
         return {
             'type': 'ir.actions.act_window',
             'name': 'Producten zonder omschrijving',
