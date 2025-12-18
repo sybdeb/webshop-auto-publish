@@ -134,35 +134,64 @@ class ProductTemplate(models.Model):
     def cron_archive_products_without_suppliers(self):
         """
         Cron job: Archiveer producten zonder actuele leveranciers en zonder eigen voorraad
+        Werkt in batches voor performance
         
         Logica:
         - Product heeft GEEN actuele leverancier met ≥5 stuks (is_current_supplier=True + supplier_stock≥5)
         - EN product heeft eigen voorraad ≤ 0 (qty_available ≤ 0)
         → Archiveer product (active=False)
         """
-        _logger.info("Starting cron: Archive products without current suppliers")
+        _logger.info("Starting cron: Archive products without current suppliers (batch mode)")
         
-        # Zoek alle actieve producten
-        products = self.search([('active', '=', True)])
-        archived_count = 0
+        batch_size = 500
+        offset = 0
+        total_archived = 0
+        batch_count = 0
         
-        for product in products:
-            # Check 1: Heeft product actuele leveranciers met voldoende voorraad?
-            current_suppliers = product.seller_ids.filtered(lambda s: getattr(s, 'is_current_supplier', False))
-            has_supplier_stock = any((getattr(s, 'supplier_stock', 0) or 0) >= 5 for s in current_suppliers)
+        while True:
+            # Haal batch van actieve producten
+            products = self.search([('active', '=', True)], limit=batch_size, offset=offset)
             
-            # Check 2: Heeft product eigen voorraad?
-            own_stock = sum(product.product_variant_ids.mapped('qty_available'))
+            if not products:
+                break  # Geen producten meer
             
-            # Archiveer als geen leverancier EN geen eigen voorraad
-            if not has_supplier_stock and own_stock <= 0:
-                product.write({
+            batch_count += 1
+            batch_archived = 0
+            _logger.info("Processing batch %d: %d products (offset %d)", batch_count, len(products), offset)
+            
+            products_to_archive = []
+            
+            for product in products:
+                # Check 1: Heeft product actuele leveranciers met voldoende voorraad?
+                current_suppliers = product.seller_ids.filtered(lambda s: getattr(s, 'is_current_supplier', False))
+                has_supplier_stock = any((getattr(s, 'supplier_stock', 0) or 0) >= 5 for s in current_suppliers)
+                
+                # Check 2: Heeft product eigen voorraad?
+                own_stock = sum(product.product_variant_ids.mapped('qty_available'))
+                
+                # Archiveer als geen leverancier EN geen eigen voorraad
+                if not has_supplier_stock and own_stock <= 0:
+                    products_to_archive.append(product.id)
+            
+            # Bulk archive
+            if products_to_archive:
+                self.browse(products_to_archive).write({
                     'active': False,
-                    'website_published': False  # Ook offline halen
+                    'website_published': False
                 })
-                archived_count += 1
-                _logger.info("Archived product %s (no current suppliers with stock, no own stock)", product.name)
+                batch_archived = len(products_to_archive)
+                total_archived += batch_archived
+                _logger.info("Batch %d: Archived %d products", batch_count, batch_archived)
+            
+            # Commit na elke batch
+            self.env.cr.commit()
+            
+            # Stop als batch kleiner is dan batch_size (laatste batch)
+            if len(products) < batch_size:
+                break
+            
+            offset += batch_size
         
-        _logger.info("Cron completed: Archived %d products", archived_count)
+        _logger.info("Cron completed: Archived %d products in %d batches", total_archived, batch_count)
         return True
         return super().write(vals)
