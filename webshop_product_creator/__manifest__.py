@@ -19,18 +19,15 @@ Integreert met:
     'author': 'Nerbys',
     'website': 'https://nerbys.nl',
     'license': 'LGPL-3',
-    'depends': ['purchase', 'product', 'website_sale', 'product_supplier_sync', 'webshop_catalog_dashboard'],
+    'depends': ['purchase', 'product', 'website_sale', 'product_supplier_sync'],
     'data': [
         'security/ir.model.access.csv',
-        'data/config_data.xml',
-        'views/product_import_job_views.xml',
         'wizard/product_quick_create_views.xml',
         'wizard/product_bulk_create_views.xml',
-        'views/dashboard_views.xml',
+        # 'views/dashboard_views.xml',  # Requires webshop_catalog_dashboard
         'views/menus.xml',
     ],
     'installable': True,
     'application': False,
     'auto_install': False,
-    'uninstall_hook': 'uninstall_hook',
 }

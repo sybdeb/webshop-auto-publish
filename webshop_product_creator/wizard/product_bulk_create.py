@@ -99,37 +99,11 @@ class ProductBulkCreate(models.TransientModel):
             return self._create_from_errors_direct()
         
         lines_to_process = self.line_ids.filtered(lambda l: l.will_create)
-        
-        lines_to_process = self.line_ids.filtered(lambda l: l.will_create)
         total_lines = len(lines_to_process)
         
         if total_lines == 0:
             raise UserError(_('Geen producten geselecteerd om aan te maken.'))
         
-        # Voor grote imports (>5000): maak een job aan voor achtergrond processing
-        if total_lines > 5000:
-            job = self.env['product.import.job'].create({
-                'name': _('Bulk Import - %s producten') % total_lines,
-                'error_ids': [(6, 0, [line.error_id.id for line in lines_to_process if line.error_id])],
-                'categ_id': self.categ_id.id,
-                'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
-                'create_supplier_info': self.create_supplier_info,
-                'skip_duplicates': self.skip_duplicates,
-                'batch_size': batch_size,
-                'state': 'pending',
-            })
-            
-            # Toon notificatie en sluit wizard
-            self.env['bus.bus']._sendone(self.env.user.partner_id, 'simple_notification', {
-                'title': _('Import Job Aangemaakt'),
-                'message': _('Job met %s producten is aangemaakt en wordt binnen 1 minuut verwerkt. Bekijk de voortgang bij Import Jobs.') % total_lines,
-                'type': 'success',
-                'sticky': False,
-            })
-            
-            return {'type': 'ir.actions.act_window_close'}
-        
-        # Voor kleinere imports (<5000): direct verwerken
         _logger.info('Starting bulk create: %s products in batches of %s', total_lines, batch_size)
         
         created_products = []
@@ -160,15 +134,6 @@ class ProductBulkCreate(models.TransientModel):
                         
                         if existing:
                             _logger.info('Skipping duplicate: %s (matches %s)', line.name, existing.name)
-                            # Resolve/delete the error since product exists
-                            if line.error_id:
-                                try:
-                                    line.error_id.write({'resolved': True})
-                                except Exception:
-                                    try:
-                                        line.error_id.unlink()
-                                    except Exception:
-                                        pass
                             skipped += 1
                             continue
                     
@@ -191,9 +156,9 @@ class ProductBulkCreate(models.TransientModel):
                     # Maak leverancier info als beschikbaar
                     if self.create_supplier_info and line.error_id.history_id:
                         history = line.error_id.history_id
-                        if history.supplier_id:
+                        if history.partner_id:
                             self.env['product.supplierinfo'].create({
-                                'partner_id': history.supplier_id.id,
+                                'partner_id': history.partner_id.id,
                                 'product_tmpl_id': product.id,
                                 'min_qty': 1.0,
                             })
@@ -242,29 +207,6 @@ class ProductBulkCreate(models.TransientModel):
         errors = self.error_ids
         total = len(errors)
         
-        # Voor grote imports (>5000): maak een job aan voor achtergrond processing
-        if total > 5000:
-            job = self.env['product.import.job'].create({
-                'name': _('Bulk Import - %s producten') % total,
-                'error_ids': [(6, 0, errors.ids)],
-                'categ_id': self.categ_id.id,
-                'public_categ_ids': [(6, 0, self.public_categ_ids.ids)],
-                'create_supplier_info': self.create_supplier_info,
-                'skip_duplicates': self.skip_duplicates,
-                'batch_size': batch_size,
-                'state': 'pending',
-            })
-            
-            # Toon notificatie en sluit wizard
-            self.env['bus.bus']._sendone(self.env.user.partner_id, 'simple_notification', {
-                'title': _('Import Job Aangemaakt'),
-                'message': _('Job met %s producten is aangemaakt en wordt binnen 1 minuut verwerkt. Bekijk de voortgang bij Import Jobs.') % total,
-                'type': 'success',
-                'sticky': False,
-            })
-            
-            return {'type': 'ir.actions.act_window_close'}
-        
         _logger.info('DIRECT CREATE: Processing %s errors in batches of %s', total, batch_size)
         
         created_products = []
@@ -298,21 +240,10 @@ class ProductBulkCreate(models.TransientModel):
                 
                 # Skip duplicates if enabled
                 if self.skip_duplicates:
-                    is_duplicate = False
                     if error.barcode and self.env['product.template'].search([('barcode', '=', error.barcode)], limit=1):
-                        is_duplicate = True
-                    if not is_duplicate and error.product_code and self.env['product.template'].search([('default_code', '=', error.product_code)], limit=1):
-                        is_duplicate = True
-                    
-                    if is_duplicate:
-                        # Resolve/delete the error since product exists
-                        try:
-                            error.write({'resolved': True})
-                        except Exception:
-                            try:
-                                error.unlink()
-                            except Exception:
-                                pass
+                        skipped += 1
+                        continue
+                    if error.product_code and self.env['product.template'].search([('default_code', '=', error.product_code)], limit=1):
                         skipped += 1
                         continue
                 

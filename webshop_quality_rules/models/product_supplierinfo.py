@@ -24,10 +24,14 @@ class ProductSupplierinfo(models.Model):
             # Haal de laatste sync date van de leverancier (partner)
             partner_last_sync = supplier.partner_id.last_sync_date
             
-            if partner_last_sync:
-                # Product is actueel als het in de laatste import zat
-                # (supplierinfo.last_sync_date == partner.last_sync_date)
-                supplier.is_current_supplier = (supplier.last_sync_date == partner_last_sync)
-            else:
-                # Leverancier heeft nog nooit geïmporteerd
-                supplier.is_current_supplier = False
+            # Als partner.last_sync_date leeg is, gebruik dan de nieuwste supplierinfo sync van deze partner
+            if not partner_last_sync:
+                all_partner_infos = self.search([('partner_id', '=', supplier.partner_id.id), ('last_sync_date', '!=', False)])
+                if all_partner_infos:
+                    partner_last_sync = max(all_partner_infos.mapped('last_sync_date'))
+                else:
+                    supplier.is_current_supplier = True  # Geen sync data beschikbaar, assume current
+                    continue
+            
+            # Product is actueel als het in de laatste import zat
+            supplier.is_current_supplier = (supplier.last_sync_date == partner_last_sync)
