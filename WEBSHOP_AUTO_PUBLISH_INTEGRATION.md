@@ -112,18 +112,16 @@ def cron_archive_products_without_suppliers(self):
 
 **Fields Added**:
 ```python
-# webshop_quality_rules/models/product_supplierinfo.py
-is_current_supplier = fields.Boolean(
-    compute='_compute_is_current_supplier',
-    store=True,
-    help='True als dit product in de laatste import van deze leverancier zat'
-)
+# REMOVED - No longer needed
+# supplier_sync module now uses standard 'active' field on product.supplierinfo
+# Active suppliers are those in the latest import (non-archived)
 ```
 
 **Logic**:
-- Compares `product_supplierinfo.last_sync_date` with `res_partner.last_sync_date`
-- Fallback: if partner sync missing, uses MAX(supplierinfo.last_sync_date) for that partner
-- Only "current" suppliers count for validation (≥5 stock check)
+- Uses standard `active` field on `product.supplierinfo`
+- Supplier sync module sets `active=False` when archiving old import data
+- Product validation only checks suppliers with `active=True`
+- Simpler and more reliable than date-based comparison
 
 #### product.public.category (Extended)
 

@@ -1,6 +1,6 @@
 {
     'name': 'Webshop Quality Rules',
-    'version': '19.0.2.0.0',
+    'version': '19.0.3.0.0',
     'category': 'Website',
     'summary': 'Configureerbare validatieregels voor producten',
     'description': """
