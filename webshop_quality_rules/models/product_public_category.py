@@ -14,11 +14,7 @@ class ProductPublicCategory(models.Model):
         default=True,
         help='Automatisch publiceren wanneer product aan alle regels voldoet'
     )
-    min_supplier_stock = fields.Integer(
-        string='Minimale Voorraad Leverancier',
-        default=5,
-        help='Minimaal aantal stuks op voorraad bij leverancier'
-    )
+    # min_supplier_stock REMOVED - supplier sync handles stock archiving
     price_drop_threshold = fields.Float(
         string='Prijsdaling Drempel (%)',
         default=15.0,

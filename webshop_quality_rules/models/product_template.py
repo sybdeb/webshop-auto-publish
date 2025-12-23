@@ -12,7 +12,7 @@ class ProductTemplate(models.Model):
     enforce_strictly = fields.Boolean(default=True, string="Streng afdwingen (automatisch offline bij fouten)")
     validation_errors = fields.Text(compute='_compute_is_ready', store=True, string="Validatiefouten")
 
-    @api.depends('image_1920', 'list_price', 'description_ecommerce', 'description', 'barcode', 'public_categ_ids', 'seller_ids', 'public_categ_ids.auto_publish', 'public_categ_ids.min_supplier_stock', 'public_categ_ids.require_ean', 'public_categ_ids.require_brand', 'seller_ids.supplier_stock', 'seller_ids.active')
+    @api.depends('image_1920', 'list_price', 'description_ecommerce', 'description', 'barcode', 'public_categ_ids', 'public_categ_ids.auto_publish', 'public_categ_ids.require_ean', 'public_categ_ids.require_brand', 'public_categ_ids.require_short_description', 'public_categ_ids.require_long_description')
     def _compute_is_ready(self):
         for template in self:
             errors = []
@@ -49,13 +49,9 @@ class ProductTemplate(models.Model):
             if any(cat.require_brand for cat in categories) and hasattr(template, 'brand_id') and not template.brand_id:
                 errors.append(_("❌ Mist merk"))
             
-            # Regel 7: Leverancier met >=X stuks voorraad (ALLEEN ACTIEVE LEVERANCIERS)
-            min_stock = max([cat.min_supplier_stock or 5 for cat in categories])
-            # Filter op actieve leveranciers (active = True)
-            current_suppliers = template.seller_ids.filtered(lambda s: s.active)
-            supplier_ok = any((getattr(s, 'supplier_stock', 0) or 0) >= min_stock for s in current_suppliers) if current_suppliers else False
-            if not supplier_ok:
-                errors.append(_("❌ Geen actieve leverancier met ≥%d stuks") % min_stock)
+            # Regel 7: Leverancier voorraad check - VERWIJDERD
+            # Supplier sync module archiveert producten met lage/geen voorraad
+            # Gearchiveerde producten worden niet gevalideerd
             
             # Regel 8: Prijsdaling check
             if template._has_price_drop_over_threshold():

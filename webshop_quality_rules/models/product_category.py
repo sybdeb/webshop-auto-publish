@@ -8,11 +8,7 @@ class ProductCategory(models.Model):
         string="Automatische publicatie",
         help="Producten in deze categorie worden automatisch gepubliceerd als ze klaar zijn"
     )
-    min_supplier_stock = fields.Integer(
-        default=5, 
-        string="Min. voorraad bij leverancier",
-        help="Minimale voorraad die een leverancier moet hebben"
-    )
+    # min_supplier_stock REMOVED - supplier sync handles stock archiving
     price_drop_threshold = fields.Float(
         default=15.0, 
         string="Prijsdaling threshold (%)",

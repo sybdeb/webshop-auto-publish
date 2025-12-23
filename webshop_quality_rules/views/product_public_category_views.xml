@@ -13,9 +13,7 @@
                             <field name="auto_publish"/>
                             <field name="price_drop_threshold"/>
                         </group>
-                        <group string="Voorraad-instellingen">
-                            <field name="min_supplier_stock"/>
-                        </group>
+                        <!-- Voorraad-instellingen REMOVED - handled by supplier sync -->
                         <group string="Verplichte velden">
                             <field name="require_ean"/>
                             <field name="require_brand"/>
